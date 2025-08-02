@@ -1,11 +1,8 @@
 import argv
-import gleam/http/request
-import gleam/httpc
 import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/string
-import html_parser
 import shellout
 import splitter
 
