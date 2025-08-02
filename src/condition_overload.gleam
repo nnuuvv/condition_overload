@@ -1,3 +1,4 @@
+import argv
 import gleam/http/request
 import gleam/httpc
 import gleam/list
@@ -9,27 +10,50 @@ import shellout
 import splitter
 
 pub fn main() {
-  use shell_result <- result.try(
-    shellout.command(
-      run: "curl",
-      with: [
-        "https://wiki.warframe.com/w/Condition_Overload_(Mechanic)?action=edit&section=7",
-        "--silent",
-      ],
-      in: ".",
-      opt: [],
-    ),
-  )
+  let assert Ok(search) =
+    argv.load().arguments
+    |> list.first()
+    as "search has to be supploed as argument"
+  let search = string.lowercase(search)
+
+  echo search
 
   let _ =
-    shell_result
-    |> get_text_area()
-    |> result.map(parse_text_area)
-    |> result.unwrap([])
-    |> list.map(fn(x) { echo x })
-  //|> echo
+    [
+      "https://wiki.warframe.com/w/Condition_Overload_(Mechanic)?action=edit&section=7",
+      "https://wiki.warframe.com/w/Condition_Overload_(Mechanic)?action=edit&section=8",
+    ]
+    |> list.map(get_page_data)
+    |> result.values()
+    |> list.flatten()
+    |> list.find(fn(item) {
+      item.names
+      |> list.any(fn(name) {
+        let lower = string.lowercase(name)
+        string.contains(lower, search)
+      })
+    })
+    |> echo
 
-  Ok(Nil)
+  Nil
+}
+
+// do request and return Row if successful
+// 
+fn get_page_data(url: String) -> Result(List(Row), Nil) {
+  {
+    use shell_result <- result.try(
+      shellout.command(run: "curl", with: [url, "--silent"], in: ".", opt: []),
+    )
+
+    Ok(
+      shell_result
+      |> get_text_area()
+      |> result.map(parse_text_area)
+      |> result.unwrap([]),
+    )
+  }
+  |> result.replace_error(Nil)
 }
 
 // discards the html and returns only the raw text from the textarea
@@ -80,7 +104,6 @@ type Row {
 // |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
 //
 fn parse_line(line: String) -> Row {
-  echo line
   let #(names, rest) = parse_names(line, [])
 
   let sep = splitter.new(["||"])
