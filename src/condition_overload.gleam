@@ -78,7 +78,7 @@ fn format_row(row: Row) -> String {
   let Row(
     names:,
     attack:,
-    projectile: _,
+    projectile:,
     base_damage: _,
     co_bonus_at_100: _,
     co_bonus_rel_base: _,
@@ -94,7 +94,9 @@ fn format_row(row: Row) -> String {
   <> name
   <> "' '"
   <> attack
-  <> "' attack has a "
+  <> " "
+  <> projectile
+  <> "' has a "
   <> rating
   <> " interaction with GunCO."
 }
