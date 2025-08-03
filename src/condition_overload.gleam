@@ -9,7 +9,7 @@ import gleam/result
 import gleam/string
 import splitter
 
-pub fn main() -> promise.Promise(Result(Row, Nil)) {
+pub fn main() {
   let assert Ok(search) =
     argv.load().arguments
     |> list.first()
@@ -34,10 +34,7 @@ pub fn main() -> promise.Promise(Result(Row, Nil)) {
         })
       }),
     )
-    |> promise.map(fn(x) {
-      io.print(string.inspect(x))
-      x
-    })
+    |> promise.map(fn(x) { io.print(string.inspect(x)) })
 }
 
 // do request and return Row if successful
