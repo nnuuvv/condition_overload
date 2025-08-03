@@ -21,7 +21,7 @@ pub fn main() {
     "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
     "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
   ]
-  |> list.map(get_page_data)
+  |> list.map(get_gun_page_data)
   |> promise.await_list()
   |> promise.map(result.values)
   |> promise.map(list.flatten)
@@ -40,8 +40,10 @@ pub fn main() {
       _ -> {
         rows
         |> list.take(4)
-        |> list.map(fn(x) { io.println(format_row(x)) })
-        Nil
+        |> list.map(fn(x) { format_row(x) })
+        |> list.reduce(fn(acc, x) { acc <> " || " <> x })
+        |> result.map(io.println)
+        |> result.unwrap_both()
       }
     }
   })
@@ -85,7 +87,7 @@ fn format_row(row: Row) -> String {
   ) = row
 
   let name =
-    list.first(names)
+    list.reduce(names, fn(acc, x) { acc <> " / " <> x })
     |> result.unwrap("")
 
   "The '"
@@ -94,12 +96,12 @@ fn format_row(row: Row) -> String {
   <> attack
   <> "' attack has a "
   <> rating
-  <> " interaction with GunCO"
+  <> " interaction with GunCO."
 }
 
 // do request and return Row if successful
 // 
-fn get_page_data(
+fn get_gun_page_data(
   url: String,
 ) -> promise.Promise(Result(List(Row), fetch.FetchError)) {
   let assert Ok(req) = request.to(url)
@@ -256,7 +258,7 @@ fn handle_empty_line(sep, lines) {
 // parse the weapon names 
 //
 fn parse_names(line: String, acc) {
-  let sep = splitter.new(["}}/{{Weapon|", "}}/{{Weapon", "}}||", "}}"])
+  let sep = splitter.new(["}}/{{Weapon|", "}}"])
 
   let #(name, split_by, rest) = splitter.split(sep, line)
 
