@@ -35,7 +35,14 @@ pub fn main() {
         })
       }),
     )
+    // print value
     |> promise.map(result.map(_, fn(x) { io.println(format_row(x)) }))
+    // print error
+    |> promise.map(
+      result.map_error(_, fn(x) {
+        io.println("something went wrong: " <> string.inspect(x))
+      }),
+    )
 }
 
 fn format_row(row: Row) -> String {
