@@ -13,40 +13,36 @@ import splitter
 pub fn main() {
   let assert Ok(search) =
     argv.load().arguments
-    |> list.first()
+    |> list.reduce(fn(acc, x) { acc <> " " <> x })
     as "search has to be supplied as argument"
   let search = string.lowercase(search)
 
-  let _ =
-    [
-      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
-      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
-    ]
-    |> list.map(get_page_data)
-    |> promise.await_list()
-    |> promise.map(result.values)
-    |> promise.map(list.flatten)
-    |> promise.map(
-      list.find(_, fn(item) {
-        item.names
-        |> list.any(fn(name) {
-          let lower = string.lowercase(name)
-          string.contains(lower, search)
-        })
-      }),
-    )
-    // print value
-    |> promise.map(result.map(_, fn(x) { io.println(format_row(x)) }))
-    // print error
-    |> promise.map(
-      result.map_error(_, fn(x) {
-        io.println("something went wrong: " <> string.inspect(x))
-      }),
-    )
+  [
+    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
+    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
+  ]
+  |> list.map(get_page_data)
+  |> promise.await_list()
+  |> promise.map(result.values)
+  |> promise.map(list.flatten)
+  |> promise.map(
+    list.filter(_, fn(item) {
+      item.names
+      |> list.any(fn(name) {
+        let lower = string.lowercase(name)
+        string.contains(lower, search)
+      })
+    }),
+  )
+  |> promise.map(list.take(_, 4))
+  // print values
+  |> promise.map(list.map(_, fn(x) { io.println(format_row(x)) }))
 }
 
+// format row into human readable string
+//
 fn format_row(row: Row) -> String {
-  case row {
+  let rating = case row {
     Row(math_behavior: "Multiplying", ..) -> "very good"
     Row(math_behavior: "Adding", co_bonus_rel_base:, ..) -> {
       let co_bonus_rel_base =
@@ -68,6 +64,29 @@ fn format_row(row: Row) -> String {
 
     _ -> "some secret third option"
   }
+
+  let Row(
+    names:,
+    attack:,
+    projectile: _,
+    base_damage: _,
+    co_bonus_at_100: _,
+    co_bonus_rel_base: _,
+    math_behavior: _,
+    notes: _,
+  ) = row
+
+  let name =
+    list.first(names)
+    |> result.unwrap("")
+
+  "The '"
+  <> name
+  <> "' '"
+  <> attack
+  <> "' attack has a "
+  <> rating
+  <> " interaction with GunCO"
 }
 
 // do request and return Row if successful
@@ -158,16 +177,7 @@ pub type Row {
 fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
   case lines {
     ["|{{Weapon|" <> name_line, ..rest] -> {
-      let row = case rest {
-        ["|-", ..] -> {
-          parse_values_line(name_line)
-        }
-        [] | _ -> {
-          let #(names, _) = parse_names(name_line, [])
-          let row = parse_values_vertical(names, rest)
-          row
-        }
-      }
+      let #(row, rest) = parse_row(name_line, rest)
 
       process_lines(rest, [row, ..acc])
     }
@@ -188,30 +198,6 @@ fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
 //
 // |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
 //
-fn parse_values_line(line: String) -> Row {
-  let #(names, rest) = parse_names(line, [])
-
-  let sep = splitter.new(["||"])
-
-  let #(attack, _, rest) = splitter.split(sep, rest)
-  let #(projectile, _, rest) = splitter.split(sep, rest)
-  let #(base_damage, _, rest) = splitter.split(sep, rest)
-  let #(co_bonus_at_100, _, rest) = splitter.split(sep, rest)
-  let #(co_bonus_rel_base, _, rest) = splitter.split(sep, rest)
-  let #(math_behavior, _, rest) = splitter.split(sep, rest)
-  let #(notes, _, _) = splitter.split(sep, rest)
-  Row(
-    names:,
-    attack:,
-    projectile:,
-    base_damage:,
-    co_bonus_at_100:,
-    co_bonus_rel_base:,
-    math_behavior:,
-    notes:,
-  )
-}
-
 // multi line - single & multi name
 //
 // |{{Weapon|Evensong}}
@@ -224,34 +210,56 @@ fn parse_values_line(line: String) -> Row {
 // |Does not apply
 // |-
 //
-fn parse_values_vertical(names: List(String), lines: List(String)) -> Row {
-  let #(attack, rest) = parse_value(lines)
-  let #(projectile, rest) = parse_value(rest)
-  let #(base_damage, rest) = parse_value(rest)
-  let #(co_bonus_at_100, rest) = parse_value(rest)
-  let #(co_bonus_rel_base, rest) = parse_value(rest)
-  let #(math_behavior, rest) = parse_value(rest)
-  let #(notes, _) = parse_value(rest)
+fn parse_row(name_line: String, lines: List(String)) -> #(Row, List(String)) {
+  let #(names, line_rest) = parse_names(name_line, [])
 
-  Row(
-    names:,
-    attack:,
-    projectile:,
-    base_damage:,
-    co_bonus_at_100:,
-    co_bonus_rel_base:,
-    math_behavior:,
-    notes:,
+  let #(attack, line_rest, rest) = parse_next_value(line_rest, lines)
+  let #(projectile, line_rest, rest) = parse_next_value(line_rest, rest)
+  let #(base_damage, line_rest, rest) = parse_next_value(line_rest, rest)
+  let #(co_bonus_at_100, line_rest, rest) = parse_next_value(line_rest, rest)
+  let #(co_bonus_rel_base, line_rest, rest) = parse_next_value(line_rest, rest)
+  let #(math_behavior, line_rest, rest) = parse_next_value(line_rest, rest)
+  let #(notes, _, rest) = parse_next_value(line_rest, rest)
+
+  #(
+    Row(
+      names:,
+      attack:,
+      projectile:,
+      base_damage:,
+      co_bonus_at_100:,
+      co_bonus_rel_base:,
+      math_behavior:,
+      notes:,
+    ),
+    rest,
   )
 }
 
-// read values one at a time until the next |-
-//
-fn parse_value(lines: List(String)) {
+fn parse_next_value(
+  line_rest: String,
+  lines: List(String),
+) -> #(String, String, List(String)) {
+  let sep = splitter.new(["||"])
+
+  case splitter.split(sep, line_rest) {
+    #("", _, _) -> do_lines(sep, lines)
+    #(value, "||", line_rest) -> #(value, line_rest, lines)
+    #(value, "", _) -> #(value, "", lines)
+    #(_, _, _) -> do_lines(sep, lines)
+  }
+}
+
+fn do_lines(sep, lines) {
   case lines {
-    ["|-", ..] -> #("", lines)
-    ["|" <> value, ..rest] -> #(value, rest)
-    [] | [_] | [_, _, ..] -> #("", lines)
+    ["|-", ..] -> #("", "", lines)
+    ["|" <> value, ..rest] -> {
+      case splitter.split(sep, value) {
+        #(value, "||", line_rest) -> #(value, line_rest, rest)
+        #(value, _, _) -> #(value, "", rest)
+      }
+    }
+    [] | [_] | [_, _, ..] -> #("", "", lines)
   }
 }
 
@@ -262,8 +270,21 @@ fn parse_names(line: String, acc) {
 
   let #(name, split_by, rest) = splitter.split(sep, line)
 
+  let name =
+    string.split_once(name, "|")
+    |> result.map(pair.first)
+    |> result.unwrap(name)
+
   case split_by {
     "}}/{{Weapon|" | "}}/{{Weapon" -> parse_names(rest, [name, ..acc])
-    _ -> #([name, ..acc], rest)
+    _ -> {
+      // handle special cases where extra text is included after the weapon names
+      let rest =
+        string.split_once(rest, "||")
+        |> result.map(pair.second)
+        |> result.unwrap(rest)
+
+      #([name, ..acc], rest)
+    }
   }
 }
