@@ -1,6 +1,7 @@
 import argv
 import gleam/fetch
 import gleam/http/request
+import gleam/io
 import gleam/javascript/promise
 import gleam/list
 import gleam/pair
@@ -8,14 +9,12 @@ import gleam/result
 import gleam/string
 import splitter
 
-pub fn main() {
+pub fn main() -> promise.Promise(Result(Row, Nil)) {
   let assert Ok(search) =
     argv.load().arguments
     |> list.first()
     as "search has to be supploed as argument"
   let search = string.lowercase(search)
-
-  echo search
 
   let _ =
     [
@@ -35,7 +34,10 @@ pub fn main() {
         })
       }),
     )
-    |> promise.map(fn(x) { echo x })
+    |> promise.map(fn(x) {
+      io.print(string.inspect(x))
+      x
+    })
 }
 
 // do request and return Row if successful
