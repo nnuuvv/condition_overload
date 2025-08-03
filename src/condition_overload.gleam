@@ -1,9 +1,11 @@
 import argv
+import gleam/fetch
+import gleam/http/request
+import gleam/javascript/promise
 import gleam/list
 import gleam/pair
 import gleam/result
 import gleam/string
-import shellout
 import splitter
 
 pub fn main() {
@@ -17,40 +19,43 @@ pub fn main() {
 
   let _ =
     [
-      "https://wiki.warframe.com/w/Condition_Overload_(Mechanic)?action=edit&section=7",
-      "https://wiki.warframe.com/w/Condition_Overload_(Mechanic)?action=edit&section=8",
+      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
+      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
     ]
-    |> list.map(get_page_data)
-    |> result.values()
-    |> list.flatten()
-    |> list.find(fn(item) {
-      item.names
-      |> list.any(fn(name) {
-        let lower = string.lowercase(name)
-        string.contains(lower, search)
-      })
-    })
-    |> echo
-
-  Nil
+    |> list.map(do_request)
+    |> promise.await_list()
+    |> promise.map(result.values)
+    |> promise.map(list.flatten)
+    |> promise.map(
+      list.find(_, fn(item) {
+        item.names
+        |> list.any(fn(name) {
+          let lower = string.lowercase(name)
+          string.contains(lower, search)
+        })
+      }),
+    )
+    |> promise.map(fn(x) { echo x })
 }
 
 // do request and return Row if successful
 // 
-fn get_page_data(url: String) -> Result(List(Row), Nil) {
-  {
-    use shell_result <- result.try(
-      shellout.command(run: "curl", with: [url, "--silent"], in: ".", opt: []),
-    )
+fn do_request(
+  url: String,
+) -> promise.Promise(Result(List(Row), fetch.FetchError)) {
+  let assert Ok(req) = request.to(url)
 
-    Ok(
-      shell_result
-      |> get_text_area()
-      |> result.map(parse_text_area)
-      |> result.unwrap([]),
-    )
-  }
-  |> result.replace_error(Nil)
+  // Send the HTTP request to the server
+  use resp <- promise.try_await(fetch.send(req))
+  use resp <- promise.try_await(fetch.read_text_body(resp))
+
+  let rows =
+    resp.body
+    |> get_text_area()
+    |> result.map(parse_text_area)
+    |> result.unwrap([])
+
+  promise.resolve(Ok(rows))
 }
 
 // discards the html and returns only the raw text from the textarea
@@ -75,7 +80,7 @@ fn parse_text_area(textarea: String) {
   |> process_lines([])
 }
 
-type Row {
+pub type Row {
   Row(
     names: List(String),
     attack: String,
