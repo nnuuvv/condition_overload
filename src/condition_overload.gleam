@@ -177,10 +177,9 @@ pub type Row {
 // |N/A
 // |Does not apply
 // |-
-// 
-// into row type
 //
-// |-
+// as well as both mixed, into row type
+// 
 //
 fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
   case lines {
@@ -194,29 +193,8 @@ fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
   }
 }
 
-// Parse single line entires into Row type
-//
-// !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
-//
-// single name
-//
-// |{{Weapon|Ambassador}}||Alt-fire Hitscan AoE||AoE||800||600||75%||Adding||Radial hit only receives CO bonus on target directly hit by laser. CO-bonus scales off hitscan damage. AoE does not scale off multishot.
-//
-// multi name
-//
-// |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
-//
-// multi line - single & multi name
-//
-// |{{Weapon|Evensong}}
-// |Charged Radial Attack
-// |AoE
-// |150
-// |0
-// |0%
-// |N/A
-// |Does not apply
-// |-
+// parses 1 'Row' type worth of data from the supplied lines
+// handles single line, multi line and mixed data
 //
 fn parse_row(name_line: String, lines: List(String)) -> #(Row, List(String)) {
   let #(names, line_rest) = parse_names(name_line, [])
@@ -244,6 +222,8 @@ fn parse_row(name_line: String, lines: List(String)) -> #(Row, List(String)) {
   )
 }
 
+// parses the next value from the data
+// 
 fn parse_next_value(
   line_rest: String,
   lines: List(String),
@@ -251,14 +231,16 @@ fn parse_next_value(
   let sep = splitter.new(["||"])
 
   case splitter.split(sep, line_rest) {
-    #("", _, _) -> do_lines(sep, lines)
+    #("", _, _) -> handle_empty_line(sep, lines)
     #(value, "||", line_rest) -> #(value, line_rest, lines)
     #(value, "", _) -> #(value, "", lines)
-    #(_, _, _) -> do_lines(sep, lines)
+    #(_, _, _) -> handle_empty_line(sep, lines)
   }
 }
 
-fn do_lines(sep, lines) {
+// 
+//
+fn handle_empty_line(sep, lines) {
   case lines {
     ["|-", ..] -> #("", "", lines)
     ["|" <> value, ..rest] -> {
@@ -271,7 +253,7 @@ fn do_lines(sep, lines) {
   }
 }
 
-// process the weapon names 
+// parse the weapon names 
 //
 fn parse_names(line: String, acc) {
   let sep = splitter.new(["}}/{{Weapon|", "}}/{{Weapon", "}}||", "}}"])
