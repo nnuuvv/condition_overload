@@ -1,6 +1,7 @@
 import argv
 import gleam/fetch
 import gleam/http/request
+import gleam/int
 import gleam/io
 import gleam/javascript/promise
 import gleam/list
@@ -13,7 +14,7 @@ pub fn main() {
   let assert Ok(search) =
     argv.load().arguments
     |> list.first()
-    as "search has to be supploed as argument"
+    as "search has to be supplied as argument"
   let search = string.lowercase(search)
 
   let _ =
@@ -34,7 +35,32 @@ pub fn main() {
         })
       }),
     )
-    |> promise.map(fn(x) { io.print(string.inspect(x)) })
+    |> promise.map(result.map(_, fn(x) { io.println(format_row(x)) }))
+}
+
+fn format_row(row: Row) -> String {
+  case row {
+    Row(math_behavior: "Multiplying", ..) -> "very good"
+    Row(math_behavior: "Adding", co_bonus_rel_base:, ..) -> {
+      let co_bonus_rel_base =
+        co_bonus_rel_base
+        |> string.split_once("%")
+        |> result.map(pair.first)
+        |> result.try(int.parse)
+        |> result.unwrap(0)
+
+      case co_bonus_rel_base {
+        bonus if bonus > 100 -> "good"
+        bonus if bonus == 100 -> "normal"
+        bonus if bonus < 100 -> "poor"
+        _ -> panic as "unreachable(some secret fourth option)"
+      }
+    }
+
+    Row(math_behavior: "N/A", ..) | Row(math_behavior: "", ..) -> "bad"
+
+    _ -> "some secret third option"
+  }
 }
 
 // do request and return Row if successful
@@ -86,7 +112,7 @@ pub type Row {
     projectile: String,
     base_damage: String,
     co_bonus_at_100: String,
-    co_bonos_rel_base: String,
+    co_bonus_rel_base: String,
     math_behavior: String,
     notes: String,
   )
@@ -164,7 +190,7 @@ fn parse_values_line(line: String) -> Row {
   let #(projectile, _, rest) = splitter.split(sep, rest)
   let #(base_damage, _, rest) = splitter.split(sep, rest)
   let #(co_bonus_at_100, _, rest) = splitter.split(sep, rest)
-  let #(co_bonos_rel_base, _, rest) = splitter.split(sep, rest)
+  let #(co_bonus_rel_base, _, rest) = splitter.split(sep, rest)
   let #(math_behavior, _, rest) = splitter.split(sep, rest)
   let #(notes, _, _) = splitter.split(sep, rest)
   Row(
@@ -173,7 +199,7 @@ fn parse_values_line(line: String) -> Row {
     projectile:,
     base_damage:,
     co_bonus_at_100:,
-    co_bonos_rel_base:,
+    co_bonus_rel_base:,
     math_behavior:,
     notes:,
   )
@@ -196,7 +222,7 @@ fn parse_values_vertical(names: List(String), lines: List(String)) -> Row {
   let #(projectile, rest) = parse_value(rest)
   let #(base_damage, rest) = parse_value(rest)
   let #(co_bonus_at_100, rest) = parse_value(rest)
-  let #(co_bonos_rel_base, rest) = parse_value(rest)
+  let #(co_bonus_rel_base, rest) = parse_value(rest)
   let #(math_behavior, rest) = parse_value(rest)
   let #(notes, _) = parse_value(rest)
 
@@ -206,7 +232,7 @@ fn parse_values_vertical(names: List(String), lines: List(String)) -> Row {
     projectile:,
     base_damage:,
     co_bonus_at_100:,
-    co_bonos_rel_base:,
+    co_bonus_rel_base:,
     math_behavior:,
     notes:,
   )
