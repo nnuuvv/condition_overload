@@ -21,7 +21,7 @@ pub fn main() {
       "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
       "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
     ]
-    |> list.map(do_request)
+    |> list.map(get_page_data)
     |> promise.await_list()
     |> promise.map(result.values)
     |> promise.map(list.flatten)
@@ -39,7 +39,7 @@ pub fn main() {
 
 // do request and return Row if successful
 // 
-fn do_request(
+fn get_page_data(
   url: String,
 ) -> promise.Promise(Result(List(Row), fetch.FetchError)) {
   let assert Ok(req) = request.to(url)
@@ -92,42 +92,6 @@ pub type Row {
   )
 }
 
-// Parse single line entires into Row type
-//
-// !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
-//
-// single name
-//
-// |{{Weapon|Ambassador}}||Alt-fire Hitscan AoE||AoE||800||600||75%||Adding||Radial hit only receives CO bonus on target directly hit by laser. CO-bonus scales off hitscan damage. AoE does not scale off multishot.
-//
-// multi name
-//
-// |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
-//
-fn parse_line(line: String) -> Row {
-  let #(names, rest) = parse_names(line, [])
-
-  let sep = splitter.new(["||"])
-
-  let #(attack, _, rest) = splitter.split(sep, rest)
-  let #(projectile, _, rest) = splitter.split(sep, rest)
-  let #(base_damage, _, rest) = splitter.split(sep, rest)
-  let #(co_bonus_at_100, _, rest) = splitter.split(sep, rest)
-  let #(co_bonos_rel_base, _, rest) = splitter.split(sep, rest)
-  let #(math_behavior, _, rest) = splitter.split(sep, rest)
-  let #(notes, _, _) = splitter.split(sep, rest)
-  Row(
-    names:,
-    attack:,
-    projectile:,
-    base_damage:,
-    co_bonus_at_100:,
-    co_bonos_rel_base:,
-    math_behavior:,
-    notes:,
-  )
-}
-
 // Parse data line by line from the following formats: 
 //
 // !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
@@ -163,7 +127,7 @@ fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
     ["|{{Weapon|" <> name_line, ..rest] -> {
       let row = case rest {
         ["|-", ..] -> {
-          parse_line(name_line)
+          parse_values_line(name_line)
         }
         [] | _ -> {
           let #(names, _) = parse_names(name_line, [])
@@ -177,6 +141,42 @@ fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
     [_, ..rest] -> process_lines(rest, acc)
     [] -> acc
   }
+}
+
+// Parse single line entires into Row type
+//
+// !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
+//
+// single name
+//
+// |{{Weapon|Ambassador}}||Alt-fire Hitscan AoE||AoE||800||600||75%||Adding||Radial hit only receives CO bonus on target directly hit by laser. CO-bonus scales off hitscan damage. AoE does not scale off multishot.
+//
+// multi name
+//
+// |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
+//
+fn parse_values_line(line: String) -> Row {
+  let #(names, rest) = parse_names(line, [])
+
+  let sep = splitter.new(["||"])
+
+  let #(attack, _, rest) = splitter.split(sep, rest)
+  let #(projectile, _, rest) = splitter.split(sep, rest)
+  let #(base_damage, _, rest) = splitter.split(sep, rest)
+  let #(co_bonus_at_100, _, rest) = splitter.split(sep, rest)
+  let #(co_bonos_rel_base, _, rest) = splitter.split(sep, rest)
+  let #(math_behavior, _, rest) = splitter.split(sep, rest)
+  let #(notes, _, _) = splitter.split(sep, rest)
+  Row(
+    names:,
+    attack:,
+    projectile:,
+    base_damage:,
+    co_bonus_at_100:,
+    co_bonos_rel_base:,
+    math_behavior:,
+    notes:,
+  )
 }
 
 // multi line - single & multi name
