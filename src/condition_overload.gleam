@@ -34,9 +34,17 @@ pub fn main() {
       })
     }),
   )
-  |> promise.map(list.take(_, 4))
-  // print values
-  |> promise.map(list.map(_, fn(x) { io.println(format_row(x)) }))
+  |> promise.map(fn(rows) {
+    case list.length(rows) {
+      0 -> io.println("\"" <> search <> "\" could not be found")
+      _ -> {
+        rows
+        |> list.take(4)
+        |> list.map(fn(x) { io.println(format_row(x)) })
+        Nil
+      }
+    }
+  })
 }
 
 // format row into human readable string
