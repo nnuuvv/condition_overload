@@ -1,0 +1,32 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: docker
+    container: 
+      image: docker:dind
+    steps:
+      - name: Checkout repository
+        uses: https://data.forgejo.org/actions/checkout@v4
+
+      - name: Make artifact directory
+        run: mkdir artifacts
+
+      - name: Build Dockerfile
+        run: docker build --output ./artifacts/ .
+
+      - name: Upload release
+        uses: https://data.forgejo.org/actions/forgejo-release@v2.7.1
+        with: 
+          direction: upload
+          url: https://git.nuv.sh
+          repo: nuv/condition_overload
+          token: ${{ secrets.WRITE_TOKEN }}
+          tag: ${{ forge.ref_name }}
+          release-dir: ./artifacts/
+          release-notes: ${{ env.FORGEJO_SHA }}
