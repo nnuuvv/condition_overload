@@ -14,7 +14,7 @@ jobs:
       - name: Add git
         run: apk add git
       - name: Checkout repository
-        uses: https://code.forgejo.org/actions/checkout@v4
+        run: git clone http://git:3000/${{ forge.action_repository }}/src/commit/${{ forge.sha }}
 
       - name: Run gleam build
         run: gleam build
