@@ -21,7 +21,7 @@ jobs:
 
       - name: Add entrypoint
         run: |
-          "echo 'import { main } from \"./condition_overload.mjs\"\;\nmain()\;' > ./condition_overload/build/dev/javascript/condition_overload/gleam.main.mjs"
+          echo "import { main } from \"./condition_overload.mjs\"\;\nmain()\;" > ./condition_overload/build/dev/javascript/condition_overload/gleam.main.mjs
 
       - name: Display build artifacts
         run: ls ./condition_overload/build/dev/javascript/
