@@ -14,7 +14,7 @@ jobs:
       - name: Add git
         run: apk add git
       - name: Checkout repository
-        run: git clone http://git:3000/${{ forge.repository }}/src/commit/${{ forge.sha }}
+        run: git clone ${{ forge.server_url }}/${{ forge.repository }}/src/commit/${{ forge.sha }}
 
       - name: Run gleam build
         run: gleam build
