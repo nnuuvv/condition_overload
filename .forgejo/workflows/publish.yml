@@ -33,7 +33,7 @@ jobs:
     needs: gleam_build
     runs-on: docker-cli
     container:
-      image: oven/bun:alpine
+      image: oven/bun:latest
     steps:
       - name: Download artifact
         uses: https://code.forgejo.org/forgejo/download-artifact@v4
@@ -64,7 +64,8 @@ jobs:
 
       - name: Zip binaries
         run: |
-          apk add zip
+          apt update -y
+          apt install zip -y
           for dir in ./build/bin/*/; do 
               dir=${dir%*/}
               
