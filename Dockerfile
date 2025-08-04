@@ -4,7 +4,7 @@ RUN cd /app && gleam build
 
 FROM oven/bun AS compile
 COPY --from=build /app/build/dev/javascript/ /build
-WORKDIR /app
+WORKDIR /build
 RUN bun build --compile --target=bun-linux-x64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/linux-x64/condition_overload
 RUN bun build --compile --target=bun-linux-arm64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/linux-arm64/condition_overload
 RUN bun build --compile --target=bun-windows-x64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/windows-x64/condition_overload
