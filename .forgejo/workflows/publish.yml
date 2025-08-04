@@ -19,6 +19,9 @@ jobs:
       - name: Run gleam build
         run: cd condition_overload && gleam build
 
+      - name: check
+        run: ls -lka
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
