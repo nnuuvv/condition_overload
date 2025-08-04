@@ -17,7 +17,7 @@ jobs:
         run: git clone --branch ${{ forge.ref_name }} ${{ forge.server_url }}/${{ forge.repository }}.git
 
       - name: Run gleam build
-        run: gleam build
+        run: cd condition_overload && gleam build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
