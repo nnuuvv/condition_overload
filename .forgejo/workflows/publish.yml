@@ -6,27 +6,63 @@ on:
       - 'v*'
 
 jobs:
-  publish:
+  gleam_build:
     runs-on: docker-cli
-    container: 
-      image: docker:dind
+    container:
+      image: ghcr.io/gleam-lang/gleam:v1.11.1-node-alpine
     steps:
       - name: Checkout repository
         uses: https://data.forgejo.org/actions/checkout@v4
 
-      - name: Make artifact directory
-        run: mkdir artifacts
+      - name: Run gleam build
+        run: gleam build
 
-      - name: Build Dockerfile
-        run: docker build --output ./artifacts/ .
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gleam_build
+          path: ./build/dev/javascript/
+
+  bun_package:
+    needs: gleam_build
+    runs-on: docker-cli
+    container:
+      image: oven/bun
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gleam_build
+          path: /build
+
+      - name: Build linux-x64
+        run: bun build --compile --target=bun-linux-x64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/linux-x64/condition_overload
+
+      - name: Build linux-arm64
+        run: bun build --compile --target=bun-linux-arm64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/linux-arm64/condition_overload
+
+      - name: Build windows-x64
+        run: bun build --compile --target=bun-windows-x64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/windows-x64/condition_overload
+
+      - name: Build darwin-x64
+        run: bun build --compile --target=bun-darwin-x64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/darwin-x64/condition_overload
+
+      - name: Build darwin-arm64
+        run: bun build --compile --target=bun-darwin-arm64 /build/condition_overload/condition_overload.mjs --outfile /build/bin/darwin-arm64/condition_overload
+
+      - name: Build x64-musl
+        run: bun build --compile --target=bun-x64-musl /build/condition_overload/condition_overload.mjs --outfile /build/bin/x64-musl/condition_overload
+
+      - name: Build linux-arm64-musl
+        run: bun build --compile --target=bun-linux-arm64-musl /build/condition_overload/condition_overload.mjs --outfile /build/bin/linux-arm64-musl/condition_overload
 
       - name: Upload release
-        uses: https://data.forgejo.org/actions/forgejo-release@v2.7.1
+        uses: actions/forgejo-release@v2.7.1
         with: 
           direction: upload
           url: https://git.nuv.sh
           repo: nuv/condition_overload
           token: ${{ secrets.WRITE_TOKEN }}
           tag: ${{ forge.ref_name }}
-          release-dir: ./artifacts/
+          release-dir: /build/bin/
           release-notes: ${{ env.FORGEJO_SHA }}
