@@ -35,6 +35,11 @@ jobs:
     container:
       image: oven/bun:latest
     steps:
+      - name: apt update & apt install zip
+        run: |
+          apt update -y
+          apt install zip -y
+
       - name: Download artifact
         uses: https://code.forgejo.org/forgejo/download-artifact@v4
         with:
@@ -42,30 +47,28 @@ jobs:
           path: ./build
 
       - name: Build linux-x64
-        run: bun build --compile --target=bun-linux-x64 ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/linux-x64/condition_overload
+        run: 
 
       - name: Build linux-arm64
-        run: bun build --compile --target=bun-linux-arm64 ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/linux-arm64/condition_overload
+        run: bun build --compile --target=bun-linux-arm64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-arm64/condition_overload
 
       - name: Build windows-x64
-        run: bun build --compile --target=bun-windows-x64 ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/windows-x64/condition_overload
+        run: bun build --compile --target=bun-windows-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/windows-x64/condition_overload
 
       - name: Build darwin-x64
-        run: bun build --compile --target=bun-darwin-x64 ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/darwin-x64/condition_overload
+        run: bun build --compile --target=bun-darwin-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/darwin-x64/condition_overload
 
       - name: Build darwin-arm64
-        run: bun build --compile --target=bun-darwin-arm64 ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/darwin-arm64/condition_overload
+        run: bun build --compile --target=bun-darwin-arm64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/darwin-arm64/condition_overload
 
       - name: Build x64-musl
-        run: bun build --compile --target=bun-x64-musl ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/x64-musl/condition_overload
+        run: bun build --compile --target=bun-x64-musl ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/x64-musl/condition_overload
 
       - name: Build linux-arm64-musl
-        run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
+        run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
 
       - name: Zip binaries
         run: |
-          apt update -y
-          apt install zip -y
           for dir in ./build/bin/*/; do 
               dir=${dir%*/}
               
