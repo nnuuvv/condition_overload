@@ -63,12 +63,12 @@ jobs:
         run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
 
       - name: Upload release
-        uses: actions/forgejo-release@v2.7.1
+        uses: https://data.forgejo.org/actions/forgejo-release@v2.7.1
         with: 
           direction: upload
-          url: ${{ forge.server_url }}
-          repo: ${{ forge.repository }}
-          token: ${{ secrets.WRITE_TOKEN }}
+          url: "https://git.nuv.sh"
+          repo: "nuv/condition_overload"
+          token: ${{ secrets.TOKEN }}
           tag: ${{ forge.ref_name }}
           override: true
           release-dir: ./build/bin/
