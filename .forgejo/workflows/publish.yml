@@ -47,7 +47,7 @@ jobs:
           path: ./build
 
       - name: Build linux-x64
-        run: 
+        run: bun build --compile --target=bun-linux-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-x64/condition_overload
 
       - name: Build linux-arm64
         run: bun build --compile --target=bun-linux-arm64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-arm64/condition_overload
