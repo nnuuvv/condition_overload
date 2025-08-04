@@ -66,9 +66,10 @@ jobs:
         uses: actions/forgejo-release@v2.7.1
         with: 
           direction: upload
-          url: https://git.nuv.sh
-          repo: nuv/condition_overload
+          url: ${{ forge.server_url }}
+          repo: ${{ forge.repository }}
           token: ${{ secrets.WRITE_TOKEN }}
           tag: ${{ forge.ref_name }}
+          override: true
           release-dir: ./build/bin/
           release-notes: ${{ env.FORGEJO_SHA }}
