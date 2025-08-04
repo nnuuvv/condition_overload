@@ -12,7 +12,7 @@ jobs:
       image: ghcr.io/gleam-lang/gleam:v1.11.1-node-alpine
     steps:
       - name: Checkout repository
-        uses: https://data.forgejo.org/actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Run gleam build
         run: gleam build
