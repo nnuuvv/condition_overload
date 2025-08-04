@@ -26,7 +26,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gleam_build
-          path: ./build/dev/javascript/
+          path: ./condition_overload/build/dev/javascript/
+          if-no-files-found: error Files not found 
 
   bun_package:
     needs: gleam_build
