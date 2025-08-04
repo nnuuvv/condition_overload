@@ -33,7 +33,7 @@ jobs:
     needs: gleam_build
     runs-on: docker-cli
     container:
-      image: oven/bun
+      image: oven/bun:alpine
     steps:
       - name: Download artifact
         uses: https://code.forgejo.org/forgejo/download-artifact@v4
@@ -61,6 +61,16 @@ jobs:
 
       - name: Build linux-arm64-musl
         run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/condition_overload.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
+
+      - name: Zip binaries
+        run: |
+          apk add zip
+          for dir in ./build/bin/*/; do 
+              dir=${dir%*/}
+              
+              zip -r "${dir}.zip" "${dir}/"
+              rm $dir -rf
+          done
 
       - name: Upload release
         uses: https://data.forgejo.org/actions/forgejo-release@v2.7.1
