@@ -11,42 +11,44 @@ import gleam/string
 import splitter
 
 pub fn main() {
-  let assert Ok(search) =
+  use search <- result.try(
     argv.load().arguments
-    |> list.reduce(fn(acc, x) { acc <> " " <> x })
-    as "search has to be supplied as argument"
+    |> list.reduce(fn(acc, x) { acc <> " " <> x }),
+  )
   let search = string.lowercase(search)
 
-  [
-    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
-    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
-  ]
-  |> list.map(get_gun_page_data)
-  |> promise.await_list()
-  |> promise.map(result.values)
-  |> promise.map(list.flatten)
-  |> promise.map(
-    list.filter(_, fn(item) {
-      item.names
-      |> list.any(fn(name) {
-        let lower = string.lowercase(name)
-        string.contains(lower, search)
-      })
+  Ok(
+    [
+      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
+      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
+    ]
+    |> list.map(get_gun_page_data)
+    |> promise.await_list()
+    |> promise.map(result.values)
+    |> promise.map(list.flatten)
+    |> promise.map(
+      list.filter(_, fn(item) {
+        item.names
+        |> list.any(fn(name) {
+          let lower = string.lowercase(name)
+          string.contains(lower, search)
+        })
+      }),
+    )
+    |> promise.map(fn(rows) {
+      case list.length(rows) {
+        0 -> io.println("\"" <> search <> "\" could not be found")
+        _ -> {
+          rows
+          |> list.take(4)
+          |> list.map(fn(x) { format_row(x) })
+          |> list.reduce(fn(acc, x) { acc <> " || " <> x })
+          |> result.map(io.println)
+          |> result.unwrap_both()
+        }
+      }
     }),
   )
-  |> promise.map(fn(rows) {
-    case list.length(rows) {
-      0 -> io.println("\"" <> search <> "\" could not be found")
-      _ -> {
-        rows
-        |> list.take(4)
-        |> list.map(fn(x) { format_row(x) })
-        |> list.reduce(fn(acc, x) { acc <> " || " <> x })
-        |> result.map(io.println)
-        |> result.unwrap_both()
-      }
-    }
-  })
 }
 
 // format row into human readable string
