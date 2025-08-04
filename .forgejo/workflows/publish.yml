@@ -19,15 +19,15 @@ jobs:
       - name: Run gleam build
         run: cd condition_overload && gleam build
 
-      - name: check
-        run: ls -lka
+      - name: Display build artifacts
+        run: ls ./condition_overload/build/dev/javascript/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: gleam_build
           path: ./condition_overload/build/dev/javascript/
-          if-no-files-found: error Files not found 
+          if-no-files-found: error 
 
   bun_package:
     needs: gleam_build
