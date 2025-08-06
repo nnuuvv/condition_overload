@@ -19,10 +19,6 @@ jobs:
       - name: Run gleam build
         run: cd condition_overload && gleam build
 
-      - name: Add entrypoint
-        run: |
-          echo "import { main } from \"./condition_overload.mjs\"; main();" > ./condition_overload/build/dev/javascript/condition_overload/gleam.main.mjs
-
       - name: Display build artifacts
         run: ls ./condition_overload/build/dev/javascript/
 
@@ -51,25 +47,25 @@ jobs:
           path: ./build
 
       - name: Build linux-x64
-        run: bun build --compile --target=bun-linux-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-x64/condition_overload
+        run: bun build --compile --target=bun-linux-x64 ./build/condition_overload/entry.mjs --outfile ./build/bin/linux-x64/condition_overload
 
       - name: Build linux-arm64
-        run: bun build --compile --target=bun-linux-arm64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-arm64/condition_overload
+        run: bun build --compile --target=bun-linux-arm64 ./build/condition_overload/entry.mjs --outfile ./build/bin/linux-arm64/condition_overload
 
       - name: Build windows-x64
-        run: bun build --compile --target=bun-windows-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/windows-x64/condition_overload
+        run: bun build --compile --target=bun-windows-x64 ./build/condition_overload/entry.mjs --outfile ./build/bin/windows-x64/condition_overload
 
       - name: Build darwin-x64
-        run: bun build --compile --target=bun-darwin-x64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/darwin-x64/condition_overload
+        run: bun build --compile --target=bun-darwin-x64 ./build/condition_overload/entry.mjs --outfile ./build/bin/darwin-x64/condition_overload
 
       - name: Build darwin-arm64
-        run: bun build --compile --target=bun-darwin-arm64 ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/darwin-arm64/condition_overload
+        run: bun build --compile --target=bun-darwin-arm64 ./build/condition_overload/entry.mjs --outfile ./build/bin/darwin-arm64/condition_overload
 
       - name: Build x64-musl
-        run: bun build --compile --target=bun-x64-musl ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/x64-musl/condition_overload
+        run: bun build --compile --target=bun-x64-musl ./build/condition_overload/entry.mjs --outfile ./build/bin/x64-musl/condition_overload
 
       - name: Build linux-arm64-musl
-        run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/gleam.main.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
+        run: bun build --compile --target=bun-linux-arm64-musl ./build/condition_overload/entry.mjs --outfile ./build/bin/linux-arm64-musl/condition_overload
 
       - name: Zip binaries
         run: |
