@@ -1,4 +1,4 @@
-FROM ghcr.io/gleam-lang/gleam:v1.11.1-erlang-alpine AS build
+FROM ghcr.io/gleam-lang/gleam:v1.12.0-erlang-alpine AS build
 COPY . /app/
 RUN cd /app && gleam build
 
