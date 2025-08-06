@@ -9,7 +9,7 @@ jobs:
   gleam_build:
     runs-on: docker-cli
     container:
-      image: ghcr.io/gleam-lang/gleam:v1.11.1-node-alpine
+      image: ghcr.io/gleam-lang/gleam:v1.12.0-node-alpine
     steps:
       - name: Add git
         run: apk add git
