@@ -11,44 +11,52 @@ import gleam/string
 import splitter
 
 pub fn main() {
-  use search <- result.try(
+  let search =
     argv.load().arguments
-    |> list.reduce(fn(acc, x) { acc <> " " <> x }),
-  )
-  let search = string.lowercase(search)
+    |> list.reduce(fn(acc, x) { acc <> " " <> x })
+    |> result.map(string.lowercase)
+  case search {
+    Error(_) -> io.println("Please provide a search term")
+    Ok(search) -> {
+      do_search(search)
+    }
+  }
+}
 
-  Ok(
-    [
-      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
-      "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
-    ]
-    |> list.map(get_gun_page_data)
-    |> promise.await_list()
-    |> promise.map(result.values)
-    |> promise.map(list.flatten)
-    |> promise.map(
-      list.filter(_, fn(item) {
-        item.names
-        |> list.any(fn(name) {
-          let lower = string.lowercase(name)
-          string.contains(lower, search)
-        })
-      }),
-    )
-    |> promise.map(fn(rows) {
-      case list.length(rows) {
-        0 -> io.println("\"" <> search <> "\" could not be found")
-        _ -> {
-          rows
-          |> list.take(4)
-          |> list.map(fn(x) { format_row(x) })
-          |> list.reduce(fn(acc, x) { acc <> " || " <> x })
-          |> result.map(io.println)
-          |> result.unwrap_both()
-        }
-      }
+// do search and print result if any
+//
+fn do_search(search: String) {
+  [
+    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
+    "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=8",
+  ]
+  |> list.map(get_gun_page_data)
+  |> promise.await_list()
+  |> promise.map(result.values)
+  |> promise.map(list.flatten)
+  |> promise.map(
+    list.filter(_, fn(item) {
+      item.names
+      |> list.any(fn(name) {
+        let lower = string.lowercase(name)
+        string.contains(lower, search)
+      })
     }),
   )
+  |> promise.map(fn(rows) {
+    case list.length(rows) {
+      0 -> io.println("\"" <> search <> "\" could not be found")
+      _ -> {
+        rows
+        |> list.take(4)
+        |> list.map(format_row)
+        |> list.reduce(fn(acc, x) { acc <> " || " <> x })
+        |> result.map(io.println)
+        |> result.unwrap_both()
+      }
+    }
+  })
+  Nil
 }
 
 // format row into human readable string
