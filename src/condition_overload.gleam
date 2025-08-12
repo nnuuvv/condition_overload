@@ -23,8 +23,8 @@ pub fn main() {
   }
 }
 
-// do search and print result if any
-//
+/// do search and print result if any
+///
 fn do_search(search: String) {
   [
     "https://wiki.warframe.com/w/Condition_Overload_%28Mechanic%29?action=edit&section=7",
@@ -59,8 +59,8 @@ fn do_search(search: String) {
   Nil
 }
 
-// format row into human readable string
-//
+/// format row into human readable string
+///
 fn format_row(row: Row) -> String {
   let rating = case row {
     Row(math_behavior: "Multiplying", ..) -> "very good"
@@ -111,8 +111,8 @@ fn format_row(row: Row) -> String {
   <> " interaction with GunCO."
 }
 
-// do request and return Row if successful
-// 
+/// do request and return Row if successful
+/// 
 fn get_gun_page_data(
   url: String,
 ) -> promise.Promise(Result(List(Row), fetch.FetchError)) {
@@ -131,8 +131,8 @@ fn get_gun_page_data(
   promise.resolve(Ok(rows))
 }
 
-// discards the html and returns only the raw text from the textarea
-//
+/// discards the html and returns only the raw text from the textarea
+///
 fn get_text_area(html_text: String) -> Result(String, Nil) {
   html_text
   // trim to start of textarea
@@ -166,35 +166,35 @@ pub type Row {
   )
 }
 
-// Parse data line by line from the following formats: 
-//
-// !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
-//
-// single name - one line
-//
-// |{{Weapon|Ambassador}}||Alt-fire Hitscan AoE||AoE||800||600||75%||Adding||Radial hit only receives CO bonus on target directly hit by laser. CO-bonus scales off hitscan damage. AoE does not scale off multishot.
-// |-
-//
-// multi name - one line
-//
-// |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
-// |-
-// 
-// multi line - single & multi name
-//
-// |{{Weapon|Evensong}}
-// |Charged Radial Attack
-// |AoE
-// |150
-// |0
-// |0%
-// |N/A
-// |Does not apply
-// |-
-//
-// as well as both mixed, into row type
-// 
-//
+/// Parse data line by line from the following formats: 
+///
+/// !Weapon!!Attack Name!!Projectile Type!!Attack Unmodded Damage!!Actual CO Damage Bonus at +100%!!CO Damage Bonus Relative To Base Damage!!Math/Behavior Type!!Notes
+///
+/// single name - one line
+///
+/// |{{Weapon|Ambassador}}||Alt-fire Hitscan AoE||AoE||800||600||75%||Adding||Radial hit only receives CO bonus on target directly hit by laser. CO-bonus scales off hitscan damage. AoE does not scale off multishot.
+/// |-
+///
+/// multi name - one line
+///
+/// |{{Weapon|Braton}}/{{Weapon|MK1-Braton|MK1}}/{{Weapon|Braton Prime|Prime}}/{{Weapon|Braton Vandal|Vandal}}||Incarnon Form AoE||AoE||74||70||95%||Adding||Listed values for Braton Prime with inactive Daring Reverie. Radial hit only receives CO bonus on target directly hit by bullet. AoE does not scale off multishot.
+/// |-
+/// 
+/// multi line - single & multi name
+///
+/// |{{Weapon|Evensong}}
+/// |Charged Radial Attack
+/// |AoE
+/// |150
+/// |0
+/// |0%
+/// |N/A
+/// |Does not apply
+/// |-
+///
+/// as well as both mixed, into row type
+/// 
+///
 fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
   case lines {
     ["|{{Weapon|" <> name_line, ..rest] -> {
@@ -207,9 +207,9 @@ fn process_lines(lines: List(String), acc: List(Row)) -> List(Row) {
   }
 }
 
-// parses 1 'Row' type worth of data from the supplied lines
-// handles single line, multi line and mixed data
-//
+/// parses 1 'Row' type worth of data from the supplied lines
+/// handles single line, multi line and mixed data
+///
 fn parse_row(name_line: String, lines: List(String)) -> #(Row, List(String)) {
   let #(names, line_rest) = parse_names(name_line, [])
 
@@ -236,8 +236,8 @@ fn parse_row(name_line: String, lines: List(String)) -> #(Row, List(String)) {
   )
 }
 
-// parses the next value from the data
-// 
+/// parses the next value from the data
+/// 
 fn parse_next_value(
   line_rest: String,
   lines: List(String),
@@ -267,8 +267,8 @@ fn handle_empty_line(sep, lines) {
   }
 }
 
-// parse the weapon names 
-//
+/// parse the weapon names 
+///
 fn parse_names(line: String, acc) {
   let sep = splitter.new(["}}/{{Weapon|", "}}"])
 
