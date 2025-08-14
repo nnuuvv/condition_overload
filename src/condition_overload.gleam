@@ -15,8 +15,10 @@ pub fn main() {
     argv.load().arguments
     |> list.reduce(fn(acc, x) { acc <> " " <> x })
     |> result.map(string.lowercase)
+
   case search {
     Error(_) -> io.println("Please provide a search term")
+
     Ok(search) -> {
       do_search(search)
     }
